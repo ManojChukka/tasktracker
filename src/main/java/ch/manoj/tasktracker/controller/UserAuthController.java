@@ -1,7 +1,9 @@
 package ch.manoj.tasktracker.controller;
 
+import ch.manoj.tasktracker.dto.JwtAuthResponse;
 import ch.manoj.tasktracker.dto.LoginDto;
 import ch.manoj.tasktracker.dto.UsersDto;
+import ch.manoj.tasktracker.security.JwtTokenProvider;
 import ch.manoj.tasktracker.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -25,6 +27,9 @@ public class UserAuthController {
     @Autowired
     private AuthenticationManager authenticationManager;
 
+    @Autowired
+    private JwtTokenProvider jwtTokenProvider;
+
     @PostMapping("/register")
     public ResponseEntity<UsersDto> createUser(@RequestBody UsersDto usersDto){
 
@@ -32,7 +37,7 @@ public class UserAuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<String> loginUser(@RequestBody LoginDto loginDto){
+    public ResponseEntity<JwtAuthResponse> loginUser(@RequestBody LoginDto loginDto){
 
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(loginDto.getEmail(), loginDto.getPassword())
@@ -40,6 +45,8 @@ public class UserAuthController {
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        return new ResponseEntity<>("User logged in successfully!!",HttpStatus.OK);
+        String token = jwtTokenProvider.generateToken(authentication);
+
+        return  ResponseEntity.ok(new JwtAuthResponse(token));
     }
 }
